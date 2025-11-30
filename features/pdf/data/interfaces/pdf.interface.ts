@@ -29,6 +29,16 @@ export interface IPdfListResponse {
 }
 
 /**
+ * Usuario/Destinatario
+ */
+export interface IUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+/**
  * Request para crear PDF (con archivo en Base64)
  */
 export interface IPdfCreateRequest {
@@ -38,6 +48,8 @@ export interface IPdfCreateRequest {
   fileName: string;
   fileSize: number;
   tags?: string[];
+  recipients?: string[]; // IDs de usuarios destinatarios (Para:)
+  cc?: string[]; // IDs de usuarios en copia (CC:)
 }
 
 /**

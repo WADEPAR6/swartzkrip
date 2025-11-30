@@ -34,9 +34,11 @@ export function usePdf() {
     file: File,
     title: string,
     description?: string,
+    recipients?: string[],
+    cc?: string[],
     tags?: string[]
   ): Promise<boolean> => {
-    return await pdfStore.createPdf(file, title, description, tags);
+    return await pdfStore.createPdf(file, title, description, recipients, cc, tags);
   }, []);
 
   /**

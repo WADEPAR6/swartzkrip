@@ -1,5 +1,5 @@
-import PdfMainView from "@/features/pdf/presentation/views/pdfMainView";
+import PdfSaveView from "@/features/pdf/presentation/views/pdfSaveView";
 
 export default function AddPdfPage() {
-  return <PdfMainView />;
+  return <PdfSaveView />;
 }

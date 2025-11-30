@@ -151,10 +151,23 @@ class PdfStore {
   /**
    * Crear nuevo PDF
    */
-  public async createPdf(file: File, title: string, description?: string, tags?: string[]): Promise<boolean> {
+  public async createPdf(
+    file: File, 
+    title: string, 
+    description?: string, 
+    recipients?: string[],
+    cc?: string[],
+    tags?: string[]
+  ): Promise<boolean> {
     try {
       // Validar archivo
       if (!this.validatePdfFile(file)) {
+        return false;
+      }
+
+      // Validar que haya al menos un destinatario
+      if (!recipients || recipients.length === 0) {
+        this.setError(ErrorType.VALIDATION, 'Debe especificar al menos un destinatario');
         return false;
       }
 
@@ -169,6 +182,8 @@ class PdfStore {
         fileBase64,
         fileName: file.name,
         fileSize: file.size,
+        recipients,
+        cc,
         tags,
       };
 
