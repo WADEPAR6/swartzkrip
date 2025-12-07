@@ -1,9 +1,11 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from 'axios';
 import { useEncryption } from '../encription/useEncryption';
+import tokenManager from '../lib/tokenManager';
 
 /**
  * Cliente Axios Singleton con cifrado automático
  * Todos los requests y responses son cifrados/descifrados automáticamente
+ * Incluye manejo automático de autenticación con httpOnly cookies
  */
 class AxiosClient {
   private static instance: AxiosClient;
@@ -16,6 +18,7 @@ class AxiosClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: true, // IMPORTANTE: Permite enviar cookies httpOnly
     });
 
     this.setupInterceptors();
@@ -35,24 +38,55 @@ class AxiosClient {
    * Configurar interceptores para cifrado automático
    */
   private setupInterceptors(): void {
-    // Interceptor de Request: Cifra los datos antes de enviarlos
+    // Interceptor de Request: Agrega headers de autenticación
     this.axiosInstance.interceptors.request.use(
       (config) => {
-        // Si hay datos en el body, cifrarlos
-        if (config.data) {
-          const encryptedData = useEncryption.encrypt(JSON.stringify(config.data));
-          config.data = { encrypted: encryptedData };
-        }
+        // ====== ENCRIPTACIÓN DESACTIVADA ======
+        // TODO: Activar encriptación en producción
+        
+        // if (config.data) {
+        //   const encryptedData = useEncryption.encrypt(JSON.stringify(config.data));
+        //   config.data = { encrypted: encryptedData };
+        // }
 
-        // Si hay parámetros en la URL, cifrarlos también
-        if (config.params) {
-          const encryptedParams = useEncryption.encrypt(JSON.stringify(config.params));
-          config.params = { encrypted: encryptedParams };
-        }
+        // if (config.params) {
+        //   const encryptedParams = useEncryption.encrypt(JSON.stringify(config.params));
+        //   config.params = { encrypted: encryptedParams };
+        // }
+        // ======================================
+
+        const headers = config.headers as RawAxiosRequestHeaders;
 
         // Agregar timestamp para prevenir replay attacks
-        const headers = config.headers as RawAxiosRequestHeaders;
         headers['X-Request-Time'] = Date.now().toString();
+
+        // Agregar información del usuario desde localStorage
+        const session = tokenManager.getSession();
+        const userData = tokenManager.getUserData();
+        
+        if (session) {
+          // IMPORTANTE: En producción, el token debería venir del backend
+          // Por ahora usamos un token mock basado en la sesión
+          const mockToken = `mock_token_${session.userId}_${session.role}`;
+          
+          // Bearer Token - Estándar de autenticación
+          headers['Authorization'] = `Bearer ${mockToken}`;
+          
+          // Headers adicionales con información del usuario
+          headers['X-User-Role'] = session.role;
+          headers['X-User-Id'] = session.userId;
+          headers['X-User-Email'] = session.email;
+        }
+
+        // Log para debugging
+        console.log('📤 Request:', config.url);
+        console.log('📦 Data:', config.data);
+        console.log('🔑 Headers:', {
+          authorization: headers['Authorization'],
+          role: headers['X-User-Role'],
+          userId: headers['X-User-Id'],
+          email: headers['X-User-Email'],
+        });
 
         return config;
       },
@@ -61,26 +95,46 @@ class AxiosClient {
       }
     );
 
-    // Interceptor de Response: Descifra los datos recibidos
+    // Interceptor de Response: Maneja errores de autenticación
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => {
-        // Si la respuesta tiene datos cifrados, descifrarlos
-        if (response.data && response.data.encrypted) {
-          const decryptedData = useEncryption.decrypt(response.data.encrypted);
-          try {
-            response.data = JSON.parse(decryptedData);
-          } catch (error) {
-            console.error('Error al parsear datos descifrados:', error);
-          }
-        }
+        // ====== ENCRIPTACIÓN DESACTIVADA ======
+        // TODO: Activar encriptación en producción
+        
+        // if (response.data && response.data.encrypted) {
+        //   const decryptedData = useEncryption.decrypt(response.data.encrypted);
+        //   try {
+        //     response.data = JSON.parse(decryptedData);
+        //   } catch (error) {
+        //     console.error('Error al parsear datos descifrados:', error);
+        //   }
+        // }
+        // ======================================
         return response;
       },
-      (error) => {
+      async (error) => {
         // Manejar errores de forma centralizada
         if (error.response) {
-          console.error('Error de respuesta:', error.response.status);
+          console.error('❌ Error:', error.response.status);
+          console.error('📦 Details:', error.response.data);
+
+          // Si es 401 (No autorizado), limpiar sesión
+          if (error.response.status === 401) {
+            console.warn('🔒 Token expirado, limpiando sesión...');
+            tokenManager.clearSession();
+            
+            // Redirigir a login
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+              window.location.href = '/login';
+            }
+          }
+
+          // Si es 403 (Forbidden)
+          if (error.response.status === 403) {
+            console.error('🚫 Sin permisos');
+          }
         } else if (error.request) {
-          console.error('Error de request:', error.message);
+          console.error('❌ Request error:', error.message);
         }
         return Promise.reject(error);
       }

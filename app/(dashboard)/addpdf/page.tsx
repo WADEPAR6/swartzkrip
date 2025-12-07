@@ -1,5 +1,5 @@
-import PdfMainView from "@/features/pdf/presentation/views/pdfMainView";
+import DocumentForm from "@/features/pdf/presentation/components/documentForm";
 
 export default function AddPdfPage() {
-  return <PdfMainView />;
+  return <DocumentForm />;
 }

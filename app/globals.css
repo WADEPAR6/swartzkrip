@@ -24,3 +24,84 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Estilos para react-select */
+.react-select-container .react-select__control {
+  @apply border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700;
+}
+
+.react-select-container .react-select__control:hover {
+  @apply border-blue-400 dark:border-blue-500;
+}
+
+.react-select-container .react-select__control--is-focused {
+  @apply border-blue-500 ring-2 ring-blue-500 shadow-none;
+}
+
+.react-select-container .react-select__menu {
+  @apply bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600;
+}
+
+.react-select-container .react-select__option {
+  @apply text-slate-900 dark:text-slate-100;
+}
+
+.react-select-container .react-select__option--is-focused {
+  @apply bg-blue-50 dark:bg-blue-900/30;
+}
+
+.react-select-container .react-select__option--is-selected {
+  @apply bg-blue-600 text-white;
+}
+
+.react-select-container .react-select__multi-value {
+  @apply bg-blue-100 dark:bg-blue-900/30;
+}
+
+.react-select-container .react-select__multi-value__label {
+  @apply text-blue-800 dark:text-blue-300;
+}
+
+.react-select-container .react-select__multi-value__remove:hover {
+  @apply bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100;
+}
+
+.react-select-container .react-select__input-container,
+.react-select-container .react-select__placeholder,
+.react-select-container .react-select__single-value {
+  @apply text-slate-900 dark:text-slate-100;
+}
+
+/* Estilos para el editor TipTap */
+.ProseMirror {
+  @apply focus:outline-none;
+}
+
+.ProseMirror p {
+  @apply mb-3;
+}
+
+.ProseMirror h1 {
+  @apply text-2xl font-bold mb-4;
+}
+
+.ProseMirror h2 {
+  @apply text-xl font-bold mb-3;
+}
+
+.ProseMirror h3 {
+  @apply text-lg font-bold mb-2;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  @apply pl-6 mb-3;
+}
+
+.ProseMirror ul {
+  @apply list-disc;
+}
+
+.ProseMirror ol {
+  @apply list-decimal;
+}
