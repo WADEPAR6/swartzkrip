@@ -4,6 +4,7 @@ import { IPdf, IPdfListResponse, IPdfCreateRequest, IPdfUpdateRequest } from '..
 /**
  * Servicio para gestión de PDFs
  * Utiliza el AxiosClient singleton con cifrado automático
+ * Maneja PDFs en formato Base64 encriptado
  */
 class PdfService {
   private static instance: PdfService;
@@ -26,7 +27,14 @@ class PdfService {
       const response = await axiosClient.get<IPdfListResponse>(this.basePath, {
         params: { page, limit }
       });
-      return response;
+      
+      // Calcular hasMore
+      const hasMore = (response.page * response.limit) < response.total;
+      
+      return {
+        ...response,
+        hasMore
+      };
     } catch (error) {
       console.error('Error al obtener PDFs:', error);
       throw error;
@@ -48,21 +56,13 @@ class PdfService {
 
   /**
    * Crear un nuevo PDF
+   * El archivo viene en Base64 y se envía encriptado automáticamente
    */
   async createPdf(data: IPdfCreateRequest): Promise<IPdf> {
     try {
-      // Para archivos, necesitamos usar FormData
-      const formData = new FormData();
-      formData.append('title', data.title);
-      if (data.description) formData.append('description', data.description);
-      formData.append('file', data.file);
-      if (data.tags) formData.append('tags', JSON.stringify(data.tags));
-
-      const response = await axiosClient.post<IPdf>(this.basePath, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // El AxiosClient se encargará de cifrar todo el objeto
+      // incluyendo el fileBase64
+      const response = await axiosClient.post<IPdf>(this.basePath, data);
       return response;
     } catch (error) {
       console.error('Error al crear PDF:', error);
@@ -104,7 +104,13 @@ class PdfService {
       const response = await axiosClient.get<IPdfListResponse>(`${this.basePath}/search`, {
         params: { q: query, page, limit }
       });
-      return response;
+      
+      const hasMore = (response.page * response.limit) < response.total;
+      
+      return {
+        ...response,
+        hasMore
+      };
     } catch (error) {
       console.error('Error al buscar PDFs:', error);
       throw error;
