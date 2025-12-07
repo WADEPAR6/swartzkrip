@@ -1,38 +1,80 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-const protectedRoutes = ["/dashboard", "/profile"];
+/**
+ * Middleware para proteger rutas
+ * Usa NextAuth JWT para validar la sesión de Microsoft
+ */
+
+const protectedRoutes = ["/pdf", "/addpdf", "/profile"];
 const authPageRoutes = ["/login"];
-const apiAuthPrefix = "/api/auth";
+const publicRoutes = ["/", "/api"];
 
-export default auth(async (req) => {
-  const { nextUrl } = req;
-  const authData = await req.auth;
-  const isLoggedIn = !!req.auth;
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-  const path = nextUrl.pathname;
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isProtectedRoute = protectedRoutes.includes(path);
-  const isAuthPageRoute = authPageRoutes.includes(path);
-
-  console.log({ authData });
-
-  if (isApiAuthRoute) {
+  // Permitir rutas públicas SIEMPRE
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  if (isProtectedRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl));
+  // Permitir /login SIEMPRE (ruta pública)
+  if (authPageRoutes.includes(pathname)) {
+    return NextResponse.next();
   }
 
-  if (isLoggedIn && isAuthPageRoute) {
-    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+  // Obtener token de NextAuth (para Microsoft login)
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.AUTH_SECRET 
+  });
+  
+  const isAuthenticated = !!token;
+
+  // Logs para debugging
+  console.log("🔐 Middleware:", {
+    path: pathname,
+    isAuthenticated,
+    user: token?.email || "No autenticado",
+  });
+
+  // Verificar si es ruta protegida
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
+
+  // Si es ruta protegida y NO está autenticado → redirigir a login
+  if (isProtectedRoute && !isAuthenticated) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    console.log("❌ No autenticado, redirigiendo a login desde:", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
-});
+  // Agregar headers de seguridad
+  const response = NextResponse.next();
+  
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains"
+  );
 
-// Optionally, don't invoke Middleware on some paths
+  return response;
+}
+
+// Configurar qué rutas ejecutan el middleware
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\..*|api/auth).*)",
+  ],
 };
+
