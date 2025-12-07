@@ -1,5 +1,5 @@
-import PdfMainView from "@/features/pdf/presentation/views/pdfMainView";
+import DocumentList from "@/features/pdf/presentation/components/documentList";
 
 export default function PdfPage() {
-  return <PdfMainView />;
+  return <DocumentList />;
 }

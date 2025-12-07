@@ -1,5 +1,5 @@
-import PdfSaveView from "@/features/pdf/presentation/views/pdfSaveView";
+import DocumentForm from "@/features/pdf/presentation/components/documentForm";
 
 export default function AddPdfPage() {
-  return <PdfSaveView />;
+  return <DocumentForm />;
 }

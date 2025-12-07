@@ -87,11 +87,11 @@ export default function DashboardHeader() {
                 Agregar PDF
               </Link>
               <Link
-                href="/profile"
+                href="/users"
                 className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
-                <Settings className="w-4 h-4" />
-                Perfil
+                <User className="w-4 h-4" />
+                Usuarios
               </Link>
             </nav>
           )}
