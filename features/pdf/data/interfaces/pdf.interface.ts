@@ -11,6 +11,7 @@ export interface IPdf {
   fileUrl: string;
   fileSize: number;
   mimeType: string;
+  categoria?: "Normal" | "Cifrado"; // Categoría del documento
   uploadedAt: Date | string;
   uploadedBy?: string;
   tags?: string[];

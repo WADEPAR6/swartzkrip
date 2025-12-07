@@ -2,55 +2,161 @@
 
 import { useState } from "react";
 import { Eye, FileText } from "lucide-react";
-import PdfViewerModal from "../features/pdf/presentation/components/PdfViewerModal";
-import { usePdf } from "../features/pdf/hooks/usePdf";
-import { IPdf } from "../features/pdf/data/interfaces/pdf.interface";
+import PdfViewerModal from "@/features/pdf/presentation/components/PdfViewerModal";
+import PdfPasswordDialog from "@/features/pdf/presentation/components/PdfPasswordDialog";
+import { IPdf } from "@/features/pdf/data/interfaces/pdf.interface";
+
+// Datos mock para demostrar funcionalidad
+const mockPdfs: IPdf[] = [
+  {
+    id: "pdf-001",
+    title: "Manual de Usuario - Normal",
+    description: "Guía completa del sistema (Sin cifrado)",
+    fileName: "manual_usuario.pdf",
+    fileUrl: "/sample.pdf",
+    fileSize: 2048576,
+    mimeType: "application/pdf",
+    categoria: "Normal",
+    uploadedAt: "2025-12-07T10:30:00Z",
+    uploadedBy: "user-123",
+    tags: ["manual", "documentación"],
+    isActive: true
+  },
+  {
+    id: "pdf-002",
+    title: "Informe Confidencial - Cifrado",
+    description: "Documento protegido con contraseña",
+    fileName: "informe_confidencial.pdf",
+    fileUrl: "/sample.pdf",
+    fileSize: 1536000,
+    mimeType: "application/pdf",
+    categoria: "Cifrado",
+    uploadedAt: "2025-12-06T14:20:00Z",
+    uploadedBy: "user-456",
+    tags: ["confidencial", "informe"],
+    isActive: true
+  },
+  {
+    id: "pdf-003",
+    title: "Reporte Mensual - Normal",
+    description: "Estadísticas del mes",
+    fileName: "reporte_mensual.pdf",
+    fileUrl: "/sample.pdf",
+    fileSize: 987654,
+    mimeType: "application/pdf",
+    categoria: "Normal",
+    uploadedAt: "2025-12-05T09:15:00Z",
+    uploadedBy: "user-789",
+    tags: ["reporte", "mensual"],
+    isActive: true
+  }
+];
 
 /**
  * Ejemplo de uso del PdfViewerModal con el hook usePdf
- * Muestra cómo integrar el visor modal en cualquier componente
+ * Incluye manejo de PDFs cifrados con diálogo de contraseña
  */
 export default function PdfViewerExample() {
-  const { pdfs, loading, getPdfById, downloadPdf } = usePdf();
+  const [pdfs] = useState<IPdf[]>(mockPdfs);
+  const [loading] = useState(false);
+  
   const [selectedPdf, setSelectedPdf] = useState<{
     isOpen: boolean;
     pdfUrl: string;
     fileName: string;
     title: string;
     pdfId: string;
+    categoria?: "Normal" | "Cifrado";
   }>({
     isOpen: false,
     pdfUrl: "",
     fileName: "",
     title: "",
-    pdfId: ""
+    pdfId: "",
+    categoria: "Normal"
   });
 
-  const handleViewPdf = async (pdfId: string) => {
-    try {
-      const pdf = await getPdfById(pdfId);
-      
+  const [passwordDialog, setPasswordDialog] = useState<{
+    isOpen: boolean;
+    pdfId: string;
+    title: string;
+    loading: boolean;
+    error: string;
+  }>({
+    isOpen: false,
+    pdfId: "",
+    title: "",
+    loading: false,
+    error: ""
+  });
+
+  const handleViewPdf = (pdfId: string) => {
+    const pdf = pdfs.find(p => p.id === pdfId);
+    if (!pdf) return;
+
+    // Si el PDF es cifrado, solicitar contraseña primero
+    if (pdf.categoria === "Cifrado") {
+      setPasswordDialog({
+        isOpen: true,
+        pdfId: pdf.id,
+        title: pdf.title,
+        loading: false,
+        error: ""
+      });
+    } else {
+      // PDF normal, abrir directamente
       setSelectedPdf({
         isOpen: true,
-        pdfUrl: pdf.fileUrl, // URL del PDF desde el backend
+        pdfUrl: pdf.fileUrl,
         fileName: pdf.fileName,
         title: pdf.title,
-        pdfId: pdf.id
+        pdfId: pdf.id,
+        categoria: pdf.categoria
       });
-    } catch (error) {
-      console.error("Error al cargar el PDF:", error);
-      alert("No se pudo cargar el PDF");
     }
   };
 
-  const handleDownloadPdf = async () => {
-    if (selectedPdf.pdfId) {
-      try {
-        await downloadPdf(selectedPdf.pdfId);
-      } catch (error) {
-        console.error("Error al descargar el PDF:", error);
-        alert("No se pudo descargar el PDF");
+  const handlePasswordSubmit = (password: string) => {
+    setPasswordDialog(prev => ({ ...prev, loading: true, error: "" }));
+
+    // Simular validación de contraseña
+    setTimeout(() => {
+      // En producción, validar con el backend
+      if (password === "demo123" || password.length > 0) {
+        const pdf = pdfs.find(p => p.id === passwordDialog.pdfId);
+        if (pdf) {
+          setPasswordDialog({
+            isOpen: false,
+            pdfId: "",
+            title: "",
+            loading: false,
+            error: ""
+          });
+
+          setSelectedPdf({
+            isOpen: true,
+            pdfUrl: pdf.fileUrl,
+            fileName: pdf.fileName,
+            title: pdf.title,
+            pdfId: pdf.id,
+            categoria: "Cifrado"
+          });
+        }
+      } else {
+        setPasswordDialog(prev => ({
+          ...prev,
+          loading: false,
+          error: "Contraseña incorrecta. Intenta con 'demo123' o cualquier texto."
+        }));
       }
+    }, 1000);
+  };
+
+  const handleDownloadPdf = () => {
+    if (selectedPdf.pdfId) {
+      // En producción, usar el servicio real
+      console.log("Descargando PDF:", selectedPdf.pdfId);
+      alert(`PDF "${selectedPdf.fileName}" descargado (simulado)`);
     }
   };
 
@@ -60,7 +166,8 @@ export default function PdfViewerExample() {
       pdfUrl: "",
       fileName: "",
       title: "",
-      pdfId: ""
+      pdfId: "",
+      categoria: "Normal"
     });
   };
 
@@ -103,9 +210,16 @@ export default function PdfViewerExample() {
                     className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-slate-900 dark:text-white truncate">
-                        {pdf.title}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-slate-900 dark:text-white truncate">
+                          {pdf.title}
+                        </h3>
+                        {pdf.categoria === "Cifrado" && (
+                          <span className="px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs font-semibold rounded">
+                            🔒 Cifrado
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                         {pdf.fileName} • {(pdf.fileSize / 1024 / 1024).toFixed(2)} MB
                       </p>
@@ -144,6 +258,7 @@ export default function PdfViewerExample() {
             <li>✅ Descarga directa del PDF</li>
             <li>✅ Cierre con tecla ESC o botón X</li>
             <li>✅ Entrada directa del número de página</li>
+            <li>✅ Soporte para PDFs cifrados con solicitud de contraseña</li>
             <li>✅ Responsive y con soporte dark mode</li>
           </ul>
         </div>
@@ -153,25 +268,43 @@ export default function PdfViewerExample() {
           <h3 className="font-semibold text-white mb-3">📝 Código de Ejemplo</h3>
           <pre className="text-sm text-slate-300">
             <code>{`import PdfViewerModal from "./PdfViewerModal";
+import PdfPasswordDialog from "./PdfPasswordDialog";
 
 const [viewerModal, setViewerModal] = useState({
   isOpen: false,
   pdfUrl: "",
   fileName: "",
-  title: ""
+  title: "",
+  categoria: "Normal"
 });
 
-// Abrir el modal
-const handleViewPdf = (pdf) => {
-  setViewerModal({
+const [passwordDialog, setPasswordDialog] = useState({
+  isOpen: false,
+  title: "",
+  loading: false,
+  error: ""
+});
+
+// Si el PDF es cifrado, solicitar contraseña
+if (pdf.categoria === "Cifrado") {
+  setPasswordDialog({
     isOpen: true,
-    pdfUrl: pdf.fileUrl,
-    fileName: pdf.fileName,
-    title: pdf.title
+    title: pdf.title,
+    loading: false,
+    error: ""
   });
-};
+}
 
 // En el JSX
+<PdfPasswordDialog
+  isOpen={passwordDialog.isOpen}
+  onClose={() => setPasswordDialog({ ...passwordDialog, isOpen: false })}
+  onSubmit={(password) => handlePasswordSubmit(password)}
+  loading={passwordDialog.loading}
+  error={passwordDialog.error}
+  documentTitle={passwordDialog.title}
+/>
+
 <PdfViewerModal
   isOpen={viewerModal.isOpen}
   onClose={() => setViewerModal({ ...viewerModal, isOpen: false })}
@@ -183,6 +316,16 @@ const handleViewPdf = (pdf) => {
           </pre>
         </div>
       </div>
+
+      {/* Diálogo de Contraseña para PDFs Cifrados */}
+      <PdfPasswordDialog
+        isOpen={passwordDialog.isOpen}
+        onClose={() => setPasswordDialog({ isOpen: false, pdfId: "", title: "", loading: false, error: "" })}
+        onSubmit={handlePasswordSubmit}
+        loading={passwordDialog.loading}
+        error={passwordDialog.error}
+        documentTitle={passwordDialog.title}
+      />
 
       {/* Modal Visor */}
       <PdfViewerModal

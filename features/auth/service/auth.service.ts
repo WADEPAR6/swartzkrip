@@ -114,6 +114,47 @@ class AuthService {
       return false;
     }
   }
+
+  /**
+   * Solicitar recuperación de contraseña
+   * Envía email con token de reseteo
+   */
+  public async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axiosClient.post<{ success: boolean; message: string }>(
+        `${this.AUTH_ENDPOINT}/forgot-password`,
+        { email }
+      );
+
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Error al solicitar recuperación de contraseña");
+    }
+  }
+
+  /**
+   * Resetear contraseña con token
+   */
+  public async resetPassword(
+    token: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axiosClient.post<{ success: boolean; message: string }>(
+        `${this.AUTH_ENDPOINT}/reset-password`,
+        {
+          token,
+          newPassword,
+          confirmPassword
+        }
+      );
+
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Error al resetear contraseña");
+    }
+  }
 }
 
 export const authService = AuthService.getInstance();

@@ -233,12 +233,23 @@ class DocumentoService {
 
   /**
    * Descargar documento como PDF
+   * - Normal: Descarga directa del servidor
+   * - Cifrado: Descarga cifrado con permisos de lectura/escritura, requiere clave del usuario
    */
-  async descargarPDF(id: string): Promise<Blob> {
+  async descargarPDF(id: string, clavePDF?: string): Promise<Blob> {
     try {
-      const response = await axiosClient.get(`${this.basePath}/${id}/descargar`, {
+      const config: any = {
         responseType: 'blob'
-      });
+      };
+
+      // Si se proporciona clave (para documentos cifrados), enviarla en headers
+      if (clavePDF) {
+        config.headers = {
+          'X-PDF-Key': clavePDF
+        };
+      }
+
+      const response = await axiosClient.get(`${this.basePath}/${id}/descargar`, config);
       return response as unknown as Blob;
     } catch (error) {
       console.error('Error al descargar PDF:', error);

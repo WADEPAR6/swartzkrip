@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useAuth } from "../../hooks/useAuth";
 import { Loader2, LogIn, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -163,6 +164,16 @@ export default function LoginForm() {
               </>
             )}
           </button>
+
+          {/* Forgot Password Link */}
+          <div className="text-center mt-4">
+            <Link 
+              href="/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
         </form>
 
         {/* Footer */}

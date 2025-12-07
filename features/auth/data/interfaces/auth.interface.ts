@@ -52,3 +52,35 @@ export interface IRefreshTokenResponse {
   accessToken: string;
   expiresIn: number;
 }
+
+/**
+ * Request para solicitar recuperación de contraseña
+ */
+export interface IForgotPasswordRequest {
+  email: string;
+}
+
+/**
+ * Response de solicitud de recuperación
+ */
+export interface IForgotPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Request para resetear contraseña
+ */
+export interface IResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/**
+ * Response de reseteo de contraseña
+ */
+export interface IResetPasswordResponse {
+  success: boolean;
+  message: string;
+}

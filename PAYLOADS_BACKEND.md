@@ -261,6 +261,100 @@ X-Request-Time: 1733585400000
 
 ---
 
+### 📤 SOLICITAR RECUPERACIÓN DE CONTRASEÑA
+
+**Endpoint:** `POST /api/auth/forgot-password`
+
+**Headers:**
+```http
+Content-Type: application/json
+X-Request-Time: 1733585400000
+```
+
+**Payload:**
+```json
+{
+  "email": "raul.perez@uta.edu.ec"
+}
+```
+
+**Response esperada:**
+```json
+{
+  "success": true,
+  "message": "Se ha enviado un enlace de recuperación a tu correo electrónico"
+}
+```
+
+**Email enviado al usuario:**
+```
+Asunto: Recuperación de Contraseña - Sistema de Gestión Documental
+
+Hola,
+
+Has solicitado restablecer tu contraseña. 
+
+Haz clic en el siguiente enlace para crear una nueva contraseña:
+https://app.uta.edu.ec/reset-password?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+Este enlace expirará en 1 hora.
+
+Si no solicitaste este cambio, ignora este mensaje.
+```
+
+---
+
+### 📤 RESETEAR CONTRASEÑA CON TOKEN
+
+**Endpoint:** `POST /api/auth/reset-password`
+
+**Headers:**
+```http
+Content-Type: application/json
+X-Request-Time: 1733585400000
+```
+
+**Payload:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "newPassword": "NewSecurePassword456!",
+  "confirmPassword": "NewSecurePassword456!"
+}
+```
+
+**Response esperada:**
+```json
+{
+  "success": true,
+  "message": "Contraseña actualizada exitosamente"
+}
+```
+
+**Errores posibles:**
+```json
+{
+  "success": false,
+  "message": "Token inválido o expirado"
+}
+```
+
+```json
+{
+  "success": false,
+  "message": "Las contraseñas no coinciden"
+}
+```
+
+```json
+{
+  "success": false,
+  "message": "La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas, números y caracteres especiales"
+}
+```
+
+---
+
 ## 🔵 2. CREAR/GUARDAR DOCUMENTO
 
 ### 📤 ENVIANDO AL BACKEND (Frontend → Backend)
@@ -1352,6 +1446,93 @@ GET /api/pdfs/pdf-001/download
 **Content-Disposition:** `attachment; filename="manual_usuario.pdf"`
 
 Retorna el archivo PDF directamente como blob.
+
+---
+
+### 📤 DESCARGAR DOCUMENTO (Normal o Cifrado)
+
+**Endpoint:** `GET /api/documentos/{id}/descargar`
+
+**Headers (Documento Normal):**
+```http
+Authorization: Bearer mock_token_user-123_admin
+X-User-Role: admin
+X-User-Id: user-123
+X-User-Email: raul.perez@uta.edu.ec
+X-Request-Time: 1733585400000
+```
+
+**Headers (Documento Cifrado - Requiere clave del usuario):**
+```http
+Authorization: Bearer mock_token_user-123_admin
+X-User-Role: admin
+X-User-Id: user-123
+X-User-Email: raul.perez@uta.edu.ec
+X-Request-Time: 1733585400000
+X-PDF-Key: clave_usuario_para_cifrado_123
+```
+
+**Comportamiento según categoría:**
+
+**Categoría: Normal**
+- Se descarga directamente del servidor
+- El PDF puede ser editado posteriormente
+- Permisos: Lectura y Escritura por defecto
+
+**Categoría: Cifrado**
+- El backend cifra el PDF con la clave proporcionada en `X-PDF-Key`
+- Algoritmo de cifrado: Vigenère (u otro, excepto CESAR)
+- El PDF descargado tiene permisos configurados:
+  - Lectura: ✅ Permitida
+  - Escritura: ✅ Permitida (según permisos del destinatario)
+  - Impresión: ⚙️ Configurable
+  - Modificación: ⚙️ Configurable
+- La clave es establecida por el usuario al crear el documento
+- Sin la clave correcta, el PDF no puede ser descifrado
+
+**Ejemplo (Documento Normal):**
+```
+GET /api/documentos/doc-001/descargar
+```
+
+**Ejemplo (Documento Cifrado):**
+```
+GET /api/documentos/doc-002/descargar
+Headers: X-PDF-Key: MiClaveSecreta2025!
+```
+
+### 📥 RESPUESTA DEL BACKEND
+
+**Content-Type:** `application/pdf`
+**Content-Disposition:** `attachment; filename="Oficio_0144-M.pdf"`
+
+**Documento Normal:**
+Retorna el PDF directamente como blob sin cifrado.
+
+**Documento Cifrado:**
+Retorna el PDF cifrado como blob. El archivo descargado está protegido con la clave del usuario.
+
+**Errores posibles:**
+```json
+{
+  "success": false,
+  "message": "Clave de cifrado incorrecta o no proporcionada"
+}
+```
+
+```json
+{
+  "success": false,
+  "message": "No tienes permisos para descargar este documento"
+}
+```
+
+**Notas importantes:**
+- 🔐 Para documentos cifrados, el header `X-PDF-Key` es **obligatorio**
+- 🔑 La clave debe coincidir con la establecida al crear el documento
+- 📄 El PDF cifrado mantiene permisos de lectura/escritura según configuración
+- 🚫 Algoritmo CESAR está prohibido - usar Vigenère, AES, u otro
+- 💾 El documento se guarda localmente en el dispositivo del usuario
 
 ---
 

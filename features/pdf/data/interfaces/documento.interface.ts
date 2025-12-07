@@ -29,6 +29,7 @@ export interface IDocumento {
   remitente?: IDestinatario; // Para documentos recibidos
   anexos: IAnexo[]; // PDFs adjuntos
   pdfPrincipal?: IAnexo; // PDF principal si fue subido
+  clavePDF?: string; // Clave para cifrar/descifrar PDF (solo categoría Cifrado)
   firmaQR?: string; // Base64 del QR de firma electrónica
   estado: "elaboracion" | "enviados" | "recibidos" | "no_enviados";
   fechaCreacion: Date | string;
@@ -62,6 +63,7 @@ export interface IDocumentoCreateRequest {
   destinatarios: string[]; // Array de EMAILS
   anexos?: File[]; // Archivos adjuntos
   pdfPrincipal?: File; // PDF principal si fue subido
+  clavePDF?: string; // Clave para cifrar el PDF (requerida si categoría es Cifrado)
   esDocumentoSubido: boolean;
 }
 
