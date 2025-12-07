@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Select from "react-select";
 import DocumentEditor from "./documentEditor";
-import PdfViewer from "./pdfViewer";
+// Import dinámico para PdfViewer (usa react-pdf que no funciona en SSR)
+const PdfViewer = dynamic(() => import("./pdfViewer"), { ssr: false });
 import { useDocumento } from "../../hooks/useDocumento";
 import { IDocumentoCreateRequest } from "../../data/interfaces/documento.interface";
 import { 

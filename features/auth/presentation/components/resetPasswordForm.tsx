@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Lock, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import authService from "@/features/auth/service/auth.service";
 
 /**
- * Componente para resetear contraseña con token
+ * Componente interno que usa useSearchParams
  */
-export default function ResetPasswordForm() {
+function ResetPasswordFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState("");
@@ -265,5 +265,20 @@ export default function ResetPasswordForm() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Componente wrapper con Suspense para resetear contraseña con token
+ */
+export default function ResetPasswordForm() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <ResetPasswordFormInner />
+    </Suspense>
   );
 }

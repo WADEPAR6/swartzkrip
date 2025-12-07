@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { 
   FileText, 
   Send, 
@@ -16,7 +17,8 @@ import {
   Lock,
   LockOpen
 } from "lucide-react";
-import PdfViewerModal from "./PdfViewerModal";
+// Import dinámico para PdfViewerModal (usa react-pdf que no funciona en SSR)
+const PdfViewerModal = dynamic(() => import("./PdfViewerModal"), { ssr: false });
 
 type DocumentStatus = "elaboracion" | "enviados" | "recibidos" | "no_enviados" | "enviar";
 
